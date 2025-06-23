@@ -1,0 +1,39 @@
+version: 0.2
+
+
+phases:
+  pre_build:
+    install:
+      runtime-versions:
+        java: corretto8
+
+    commands:
+      - echo Setting environment to $ENVIRONMENT
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - $(aws ecr get-login-password --region us-east-2 --no-include-email)
+      - REPO_URI=922150302481.dkr.ecr.us-east-2.amazonaws.com/cas-db-fcra
+      - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
+
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Application...
+      - mvn clean install
+      - echo Finished Building the Application...
+      - echo Building the Docker image...
+      - docker build -t $REPO_URI:latest .
+      - docker tag $REPO_URI:latest $REPO_URI:$IMAGE_TAG
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push $REPO_URI:latest
+      - docker push $REPO_URI:$IMAGE_TAG
+      - echo Writing image definitions file...
+      - printf '[{"name":"fcra image","imageUri":"%s"}]' $REPO_URI:$IMAGE_TAG > imagedefinitions.json
+      - cat imagedefinitions.json
+
+artifacts:
+  files: imagedefinitions.json
