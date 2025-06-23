@@ -11,7 +11,7 @@ phases:
       - echo Setting environment to $ENVIRONMENT
       - echo Logging in to Amazon ECR...
       - aws --version
-      - $(aws ecr get-login-password --region us-east-2 --no-include-email)
+      - $(aws ecr get-login-password --region us-east-2)
       - REPO_URI=922150302481.dkr.ecr.us-east-2.amazonaws.com/cas-db-fcra
       - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
 
